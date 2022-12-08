@@ -14,7 +14,6 @@ authrouter.post("/user/signup", async (req, res) => {
     email: req.body.email,
     password: hashedPassword,
     count: 0,
-    time: new moment(),
   });
 
   newUser
@@ -30,6 +29,8 @@ authrouter.post("/user/login", async (req, res) => {
   console.log(req.body.email);
 
   // email and password match
+
+  const date = new Date();
 
   UserModel.findOne({ email: req.body.email })
     .then(async (result) => {
@@ -51,19 +52,38 @@ authrouter.post("/user/login", async (req, res) => {
         });
 
         const updateData = async (email) => {
-          const data = await UserModel.updateOne(
+          const data = await UserModel.updateMany(
             { email: email },
-            { $set: { count: 0 } }
+            {
+              $set: {
+                count: 0,
+                current_hour: 0,
+                current_minute: 0,
+                current_second: 0,
+                current_year: 0,
+                current_date: 0,
+                current_month: 0,
+              },
+            }
           );
           console.log(data);
         };
 
         updateData(result.email);
-      } else if (counter >= 5) {
+      } else if (counter >= 4) {
         const updateData = async (email) => {
           const data = await UserModel.updateOne(
             { email: email },
-            { $set: { time: new moment() } }
+            {
+              $set: {
+                current_hour: date.getHours(),
+                current_minute: date.getMinutes(),
+                current_second: date.getSeconds(),
+                current_year: date.getFullYear(),
+                current_date: date.getDate(),
+                current_month: date.getMonth(),
+              },
+            }
           );
           console.log(data);
         };
@@ -72,10 +92,14 @@ authrouter.post("/user/login", async (req, res) => {
         res.send({
           code: 201,
           message: "Too many attempts",
-          time: new moment(),
+          current_hour: result.current_hour,
+          current_minute: result.current_minute,
+          current_date: result.current_date,
+          current_month: result.current_month,
+          current_second: result.current_second,
+          current_year: result.current_year,
         });
       } else {
-        res.send({ code: 404, message: "password wrong" });
         const updateData = async (email, counter) => {
           const data = await UserModel.updateOne(
             { email: email },
@@ -89,12 +113,22 @@ authrouter.post("/user/login", async (req, res) => {
         const updateData2 = async (email) => {
           const data = await UserModel.updateOne(
             { email: email },
-            { $set: { time: new moment() } }
+            {
+              $set: {
+                current_hour: date.getHours(),
+                current_minute: date.getMinutes(),
+                current_second: date.getSeconds(),
+                current_year: date.getFullYear(),
+                current_date: date.getDate(),
+                current_month: date.getMonth(),
+              },
+            }
           );
           console.log(data);
         };
 
         updateData2(result.email);
+        res.send({ code: 404, message: "password wrong" });
       }
     })
     .catch((err) => {
